@@ -410,3 +410,139 @@ def check_wishlist():
     
     exists = Wishlist.query.filter_by(user_id=user_id, product_id=product_id).first() is not None
     return jsonify({"in_wishlist": exists})
+
+# ======================
+# DEBUG & DATABASE CHECK ROUTES
+# ======================
+
+@routes_bp.route('/api/check-db')
+def check_database():
+    """Check if database has products"""
+    try:
+        # Count products in database
+        product_count = Product.query.count()
+        
+        return jsonify({
+            "status": "success",
+            "product_count": product_count,
+            "message": f"Found {product_count} products in database",
+            "is_empty": product_count == 0
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+@routes_bp.route('/api/add-sample-products')
+def add_sample_products():
+    """Add sample products to empty database"""
+    try:
+        # Check current count
+        current_count = Product.query.count()
+        
+        if current_count > 0:
+            return jsonify({
+                "status": "info",
+                "message": f"Already have {current_count} products. No need to add samples."
+            })
+        
+        # Sample products data
+        sample_products = [
+            {
+                "name": "Gaming Laptop Pro",
+                "price": 1299.99,
+                "rating": 4.5,
+                "review_count": 128,
+                "category": "Laptops",
+                "stock": 15,
+                "image_url": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400",
+                "description": "High-performance gaming laptop with RTX 4070"
+            },
+            {
+                "name": "Wireless Mouse",
+                "price": 29.99,
+                "rating": 4.2,
+                "review_count": 89,
+                "category": "Accessories",
+                "stock": 50,
+                "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w-400",
+                "description": "Ergonomic wireless mouse with long battery life"
+            },
+            {
+                "name": "Mechanical Keyboard",
+                "price": 89.99,
+                "rating": 4.7,
+                "review_count": 203,
+                "category": "Accessories",
+                "stock": 25,
+                "image_url": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400",
+                "description": "RGB mechanical keyboard with blue switches"
+            },
+            {
+                "name": "27-inch 4K Monitor",
+                "price": 399.99,
+                "rating": 4.4,
+                "review_count": 67,
+                "category": "Monitors",
+                "stock": 12,
+                "image_url": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=400",
+                "description": "Ultra HD monitor with HDR support"
+            },
+            {
+                "name": "Noise Cancelling Headphones",
+                "price": 199.99,
+                "rating": 4.8,
+                "review_count": 312,
+                "category": "Audio",
+                "stock": 30,
+                "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+                "description": "Premium wireless headphones with ANC"
+            }
+        ]
+        
+        added_count = 0
+        for prod_data in sample_products:
+            # Create Product object
+            product = Product(
+                name=prod_data["name"],
+                price=prod_data["price"],
+                rating=prod_data["rating"],
+                review_count=prod_data["review_count"],
+                category=prod_data["category"],
+                stock=prod_data["stock"],
+                image_url=prod_data["image_url"],
+                description=prod_data["description"]
+            )
+            db.session.add(product)
+            added_count += 1
+        
+        # Commit to database
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Added {added_count} sample products to database",
+            "products_added": sample_products
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+@routes_bp.route('/api/debug-info')
+def debug_info():
+    """Get debug information about the backend"""
+    import os
+    
+    return jsonify({
+        "backend_running": True,
+        "service": "tech-haven-4r4y.onrender.com",
+        "database_url_exists": bool(os.environ.get('DATABASE_URL')),
+        "total_products": Product.query.count(),
+        "total_users": User.query.count(),
+        "total_orders": Order.query.count(),
+        "environment": "production"
+    })
