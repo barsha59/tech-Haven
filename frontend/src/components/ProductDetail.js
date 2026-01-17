@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 
 const ProductDetail = ({ addToCart }) => {
   const { id } = useParams();
@@ -11,20 +12,27 @@ const ProductDetail = ({ addToCart }) => {
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  useEffect(() => {
-    fetchProductDetails();
-  }, [id]);
-
   const fetchProductDetails = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:5000/api/products/${id}/details`);
+      const response = await axios.get(`${API_URL}/api/products/${id}/details`);
       setProduct(response.data);
     } catch (err) {
-      setError("Failed to load product details");
+      console.log("Error fetching product details:", err);
+      // Try the regular endpoint if details endpoint fails
+      try {
+        const response = await axios.get(`${API_URL}/api/products/${id}`);
+        setProduct(response.data);
+      } catch (err2) {
+        setError("Failed to load product details");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProductDetails();
+  }, [id]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -33,7 +41,7 @@ const ProductDetail = ({ addToCart }) => {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url
+      image: product.image_url || product.image
     };
     
     // Add to cart using parent function
@@ -58,7 +66,7 @@ const ProductDetail = ({ addToCart }) => {
         {/* Product Image */}
         <div style={{ flex: "0 0 300px" }}>
           <img 
-            src={product.image_url} 
+            src={product.image_url || product.image} 
             alt={product.name} 
             style={{ width: "100%", border: "1px solid #ddd" }}
           />
@@ -76,7 +84,7 @@ const ProductDetail = ({ addToCart }) => {
               {product.rating.toFixed(1)} ★
             </span>
             <span style={{ marginLeft: "10px", color: "#007185" }}>
-              {product.reviews} ratings
+              {product.reviews || product.review_count} ratings
             </span>
           </div>
           
@@ -100,7 +108,7 @@ const ProductDetail = ({ addToCart }) => {
               onChange={(e) => setQuantity(parseInt(e.target.value))}
               style={{ padding: "5px" }}
             >
-              {[...Array(Math.min(10, product.stock)).keys()].map(num => (
+              {[...Array(Math.min(10, product.stock || 10)).keys()].map(num => (
                 <option key={num + 1} value={num + 1}>
                   {num + 1}
                 </option>

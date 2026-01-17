@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config"; // Import API_URL from config
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -22,7 +23,7 @@ const Wishlist = () => {
         return;
       }
 
-      const response = await axios.get(`http://127.0.0.1:5000/api/wishlist?user_id=${user.id}`);
+      const response = await axios.get(`${API_URL}/api/wishlist?user_id=${user.id}`);
       setWishlistItems(response.data);
     } catch (err) {
       setError("Failed to load wishlist");
@@ -35,7 +36,7 @@ const Wishlist = () => {
   const removeFromWishlist = async (productId) => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      await axios.post("http://127.0.0.1:5000/api/wishlist/remove", {
+      await axios.post(`${API_URL}/api/wishlist/remove`, {
         user_id: user.id,
         product_id: productId
       });

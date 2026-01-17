@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://127.0.0.1:5000/api/login", {
+      const response = await axios.post(`${API_URL}/api/login`, {
         email,
         password
       });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import API_URL from "../config";
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const OrderSuccess = () => {
     const fetchProductDetails = async () => {
       try {
         const productPromises = purchasedItems.map(async (item) => {
-          const response = await axios.get(`http://127.0.0.1:5000/api/products/${item.product_id}`);
+          const response = await axios.get(`${API_URL}/api/products/${item.product_id}`);
           return {
             ...response.data,
             quantity: item.quantity
@@ -84,7 +85,7 @@ const OrderSuccess = () => {
     
     try {
       const review = reviews[productId];
-      const response = await axios.post("http://127.0.0.1:5000/api/reviews", {
+      await axios.post(`${API_URL}/api/reviews`, {
         product_id: productId,
         rating: review.rating,
         comment: review.comment || ""

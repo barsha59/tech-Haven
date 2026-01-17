@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config"; // Import API_URL from config
 
 const Register = ({ onRegister }) => {
   const [name, setName] = useState("");
@@ -29,7 +30,7 @@ const Register = ({ onRegister }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://127.0.0.1:5000/api/register", {
+      const response = await axios.post(`${API_URL}/api/register`, {
         name,
         email,
         password

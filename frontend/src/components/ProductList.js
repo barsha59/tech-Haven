@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config"; // Import API_URL from config
 
 const ProductList = ({ addToCart }) => {
   const [products, setProducts] = useState([]);
@@ -23,7 +24,7 @@ const ProductList = ({ addToCart }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/api/products");
+      const response = await axios.get(`${API_URL}/api/products`);
       setProducts(response.data);
       
       // Extract unique categories
@@ -42,7 +43,7 @@ const ProductList = ({ addToCart }) => {
     for (const product of products) {
       try {
         const response = await axios.get(
-          `http://127.0.0.1:5000/api/wishlist/check?user_id=${user.id}&product_id=${product.id}`
+          `${API_URL}/api/wishlist/check?user_id=${user.id}&product_id=${product.id}`
         );
         status[product.id] = response.data.in_wishlist;
       } catch (err) {
@@ -65,7 +66,7 @@ const ProductList = ({ addToCart }) => {
       
       if (isInWishlist) {
         // Remove from wishlist
-        await axios.post("http://127.0.0.1:5000/api/wishlist/remove", {
+        await axios.post(`${API_URL}/api/wishlist/remove`, {
           user_id: user.id,
           product_id: productId
         });
@@ -73,7 +74,7 @@ const ProductList = ({ addToCart }) => {
         alert("Removed from wishlist");
       } else {
         // Add to wishlist
-        await axios.post("http://127.0.0.1:5000/api/wishlist/add", {
+        await axios.post(`${API_URL}/api/wishlist/add`, {
           user_id: user.id,
           product_id: productId
         });
@@ -90,8 +91,8 @@ const ProductList = ({ addToCart }) => {
     setSelectedCategory(category);
     try {
       const url = category 
-        ? `http://127.0.0.1:5000/api/products/category/${category}`
-        : "http://127.0.0.1:5000/api/products";
+        ? `${API_URL}/api/products/category/${category}`
+        : `${API_URL}/api/products`;
       const response = await axios.get(url);
       setProducts(response.data);
     } catch (err) {

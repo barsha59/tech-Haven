@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import API_URL from "../config";
 
 // Stripe public key
 const stripePromise = loadStripe(
@@ -70,7 +71,7 @@ const CheckoutForm = ({ cart }) => {
         quantity: item.quantity,
       }));
 
-      const { data: orderData } = await axios.post("http://127.0.0.1:5000/api/orders", {
+      const { data: orderData } = await axios.post(`${API_URL}/api/orders`,  {
         customer_name: customer.name,
         address: customer.address,
         phone: customer.phone,
@@ -80,7 +81,7 @@ const CheckoutForm = ({ cart }) => {
       const orderId = orderData.order_ids[0];
 
       // 2️⃣ Create Stripe PaymentIntent
-      const { data: paymentData } = await axios.post("http://127.0.0.1:5000/api/pay", {
+      const { data: paymentData } = await axios.post(`${API_URL}/api/pay`, {
         amount: Math.round(total * 100), // in cents
       });
 
@@ -107,7 +108,7 @@ const CheckoutForm = ({ cart }) => {
 
       if (result.paymentIntent.status === "succeeded") {
         // 4️⃣ Mark order as Paid
-        await axios.post(`http://127.0.0.1:5000/api/orders/${orderId}/pay`);
+        await axios.post(`${API_URL}/api/orders/${orderId}/pay`);
 
         // 5️⃣ Clear cart and redirect
         navigate("/order-success", { state: { 
