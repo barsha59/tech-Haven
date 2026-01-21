@@ -1,4 +1,4 @@
-# app.py
+# app.py - ONLY REPLACE LINES 11-22
 from flask import Flask
 from flask_cors import CORS
 from extensions import db
@@ -9,16 +9,26 @@ import models  # 👈 IMPORTANT: ensures models are registered
 app = Flask(__name__)
 CORS(app)
 
-# ---- DATABASE PATH SETUP ----
-basedir = os.path.abspath(os.path.dirname(__file__))
-instance_path = os.path.join(basedir, "instance")
+# ---- DATABASE SETUP ----
+import os
 
-# ensure instance folder exists
-os.makedirs(instance_path, exist_ok=True)
+# Get database URL from environment (from Supabase via Render)
+database_url = os.environ.get('DATABASE_URL')
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "sqlite:///" + os.path.join(instance_path, "database.db")
-)
+if database_url:
+    # Use PostgreSQL from Supabase
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    print("✅ Using PostgreSQL (Supabase)")
+else:
+    # Fallback for local development only
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    instance_path = os.path.join(basedir, "instance")
+    os.makedirs(instance_path, exist_ok=True)
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        "sqlite:///" + os.path.join(instance_path, "database.db")
+    )
+    print("⚠️ Using SQLite (local development)")
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ---- INIT DB ----
