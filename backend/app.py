@@ -46,5 +46,7 @@ app.register_blueprint(routes_bp)
 def home():
     return {"message": "Demo Shopping Website 1 API Running"}
 
+# app.py - ADD/UPDATE THIS SECTION AT THE BOTTOM
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render sets PORT environment variable
+    app.run(host="0.0.0.0", port=port)
