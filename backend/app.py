@@ -12,28 +12,20 @@ CORS(app)
 database_url = os.environ.get('DATABASE_URL')
 
 if database_url:
-    # FIX: Aiven uses ssl-mode=REQUIRED but pymysql needs ssl_mode=REQUIRED (underscore)
-    if 'ssl-mode=REQUIRED' in database_url:
-        database_url = database_url.replace('ssl-mode=REQUIRED', 'ssl_mode=REQUIRED')
-        print("✅ Fixed SSL parameter (ssl-mode → ssl_mode)")
+    # Remove SSL parameter entirely (Aiven handles it automatically)
+    if '?ssl-mode=REQUIRED' in database_url:
+        database_url = database_url.replace('?ssl-mode=REQUIRED', '')
     
-    # Aiven MySQL: mysql:// → mysql+pymysql:// (REQUIRED)
+    # Use mysqlclient driver (better for Aiven)
     if database_url.startswith('mysql://'):
-        database_url = database_url.replace('mysql://', 'mysql+pymysql://', 1)
+        database_url = database_url.replace('mysql://', 'mysql+mysqldb://', 1)
     
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    print("✅ Using Aiven MySQL database")
+    print("✅ Using Aiven MySQL database (mysqlclient)")
 else:
-    # Fallback to SQLite for local development
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    instance_path = os.path.join(basedir, "instance")
-    os.makedirs(instance_path, exist_ok=True)
-    
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        "sqlite:///" + os.path.join(instance_path, "database.db")
-    )
-    print("⚠️ Using SQLite database (local development)")
-
+    # Fallback to SQLite
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///local.db"
+    print("⚠️ Using SQLite (local)")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ---- INIT DB ----
