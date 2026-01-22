@@ -1,4 +1,4 @@
-# app.py - TechHaven Electronics Store (Working Version)
+# app.py - TechHaven (Clean MySQL Version)
 from flask import Flask
 from flask_cors import CORS
 from extensions import db
@@ -8,23 +8,13 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# ---- DATABASE CONFIGURATION FOR SUPABASE ----
+# ---- CLEAN DATABASE CONFIG ----
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url:
-    # Ensure SSL for Supabase
-    if 'sslmode=require' not in database_url:
-        if '?' in database_url:
-            database_url += '&sslmode=require'
-        else:
-            database_url += '?sslmode=require'
-    
-    # Use psycopg2 driver (you already have this in requirements.txt)
-    if database_url.startswith('postgresql://'):
-        database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
-    
+if database_url and ('mysql://' in database_url or 'postgresql://' in database_url):
+    # Use whatever database URL is provided
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    print("✅ Using Supabase PostgreSQL with SSL (psycopg2)")
+    print(f"✅ Using external database")
 else:
     # Fallback to SQLite for local development
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -37,37 +27,26 @@ else:
     print("⚠️ Using SQLite database (local development)")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tech-haven-secret-key')
 
 # ---- INIT DB ----
 db.init_app(app)
 
-# Create tables only - NO PRODUCT POPULATION
+# Create tables
 with app.app_context():
     db.create_all()
-    print("✅ Database tables created for TechHaven")
+    print("✅ Database tables created")
 
 # ---- REGISTER ROUTES ----
 app.register_blueprint(routes_bp)
 
 @app.route("/")
 def home():
-    return {"message": "TechHaven Electronics API Running - Supabase Edition"}
+    return {"message": "TechHaven Electronics API Running"}
 
 @app.route("/health")
 def health_check():
-    """Health check endpoint for monitoring"""
-    from models import Product
-    try:
-        product_count = Product.query.count()
-        return {
-            "status": "healthy",
-            "service": "TechHaven API",
-            "product_count": product_count,
-            "database": "Supabase PostgreSQL" if os.environ.get('DATABASE_URL') else "SQLite"
-        }
-    except:
-        return {"status": "database_error"}, 500
+    """Health check endpoint"""
+    return {"status": "ready", "service": "TechHaven"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
