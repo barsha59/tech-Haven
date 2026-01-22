@@ -1,4 +1,4 @@
-# app.py - TechHaven (Clean MySQL Version)
+# app.py - TechHaven (Aiven MySQL Ready)
 from flask import Flask
 from flask_cors import CORS
 from extensions import db
@@ -8,13 +8,16 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# ---- CLEAN DATABASE CONFIG ----
+# ---- DATABASE CONFIGURATION FOR AIVEN MYSQL ----
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url and ('mysql://' in database_url or 'postgresql://' in database_url):
-    # Use whatever database URL is provided
+if database_url:
+    # Aiven MySQL: mysql:// → mysql+pymysql:// (REQUIRED)
+    if database_url.startswith('mysql://'):
+        database_url = database_url.replace('mysql://', 'mysql+pymysql://', 1)
+    
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    print(f"✅ Using external database")
+    print("✅ Using Aiven MySQL database (pymysql driver)")
 else:
     # Fallback to SQLite for local development
     basedir = os.path.abspath(os.path.dirname(__file__))
