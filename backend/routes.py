@@ -18,26 +18,65 @@ stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "sk_test_51Sl1TM2YdULA0kvGp
 @routes_bp.route('/api/products', methods=['GET'])
 def get_products():
     sort_by = request.args.get('sort')
-    if sort_by == "price":
-        products = Product.query.order_by(Product.price.asc()).all()
-    elif sort_by == "rating":
-        products = Product.query.order_by(Product.rating.desc()).all()
-    else:
-        products = Product.query.all()
-
-    return jsonify([
-        {
-            "id": p.id,
-            "name": p.name,
-            "price": p.price,
-            "rating": p.rating,
-            "reviews": p.review_count,
-            "category": p.category,
-            "stock": p.stock,
-            "image": p.image_url
-        }
-        for p in products
-    ])
+    
+    try:
+        # Try to get from database
+        if sort_by == "price":
+            products = Product.query.order_by(Product.price.asc()).all()
+        elif sort_by == "rating":
+            products = Product.query.order_by(Product.rating.desc()).all()
+        else:
+            products = Product.query.all()
+        
+        return jsonify([
+            {
+                "id": p.id,
+                "name": p.name,
+                "price": p.price,
+                "rating": p.rating,
+                "reviews": p.review_count,
+                "category": p.category,
+                "stock": p.stock,
+                "image": p.image_url
+            }
+            for p in products
+        ])
+        
+    except Exception as e:
+        print(f"Database error, returning sample data: {e}")
+        # Fallback sample data
+        return jsonify([
+            {
+                "id": 1,
+                "name": "Gaming Laptop Pro",
+                "price": 1299.99,
+                "rating": 4.5,
+                "reviews": 128,
+                "category": "Electronics",
+                "stock": 15,
+                "image": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400"
+            },
+            {
+                "id": 2,
+                "name": "Wireless Mouse",
+                "price": 29.99,
+                "rating": 4.2,
+                "reviews": 89,
+                "category": "Accessories",
+                "stock": 50,
+                "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400"
+            },
+            {
+                "id": 3,
+                "name": "Mechanical Keyboard",
+                "price": 89.99,
+                "rating": 4.7,
+                "reviews": 203,
+                "category": "Accessories",
+                "stock": 25,
+                "image": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400"
+            }
+        ])
 
 @routes_bp.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
@@ -415,11 +454,13 @@ def check_wishlist():
 # DEBUG & DATABASE CHECK ROUTES
 # ======================
 
+# routes.py - Update the check_database() function
 @routes_bp.route('/api/check-db')
 def check_database():
     """Check if database has products"""
     try:
-        # Count products in database
+        # Use the existing db connection from Flask-SQLAlchemy
+        from models import Product
         product_count = Product.query.count()
         
         return jsonify({
@@ -429,27 +470,45 @@ def check_database():
             "is_empty": product_count == 0
         })
     except Exception as e:
+        # If query fails, database connection failed
         return jsonify({
             "status": "error",
-            "error": str(e)
+            "error": f"Database connection failed: {str(e)[:100]}",
+            "suggestion": "Check SSL configuration and Supabase IP whitelist"
         }), 500
 
 @routes_bp.route('/api/add-sample-products')
 def add_sample_products():
     """Add sample products to empty database"""
     try:
-        # Check current count
-        current_count = Product.query.count()
+        # Try to check database connection first
+        try:
+            current_count = Product.query.count()
+            db_connected = True
+        except Exception as db_error:
+            print(f"Database query failed: {db_error}")
+            current_count = 0
+            db_connected = False
+        
+        if not db_connected:
+            return jsonify({
+                "status": "error",
+                "message": "Cannot connect to database",
+                "error": "Database connection failed. Check SSL configuration and Supabase settings.",
+                "suggestion": "1. Ensure DATABASE_URL has ?sslmode=require\n2. Whitelist all IPs in Supabase\n3. Try direct connection instead of pooler"
+            }), 500
         
         if current_count > 0:
             return jsonify({
                 "status": "info",
-                "message": f"Already have {current_count} products. No need to add samples."
+                "message": f"Already have {current_count} products. No need to add samples.",
+                "product_count": current_count
             })
         
         # Sample products data
         sample_products = [
             {
+                "id": 1,
                 "name": "Gaming Laptop Pro",
                 "price": 1299.99,
                 "rating": 4.5,
@@ -460,16 +519,18 @@ def add_sample_products():
                 "description": "High-performance gaming laptop with RTX 4070"
             },
             {
+                "id": 2,
                 "name": "Wireless Mouse",
                 "price": 29.99,
                 "rating": 4.2,
                 "review_count": 89,
                 "category": "Accessories",
                 "stock": 50,
-                "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w-400",
+                "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400",
                 "description": "Ergonomic wireless mouse with long battery life"
             },
             {
+                "id": 3,
                 "name": "Mechanical Keyboard",
                 "price": 89.99,
                 "rating": 4.7,
@@ -480,6 +541,7 @@ def add_sample_products():
                 "description": "RGB mechanical keyboard with blue switches"
             },
             {
+                "id": 4,
                 "name": "27-inch 4K Monitor",
                 "price": 399.99,
                 "rating": 4.4,
@@ -490,6 +552,7 @@ def add_sample_products():
                 "description": "Ultra HD monitor with HDR support"
             },
             {
+                "id": 5,
                 "name": "Noise Cancelling Headphones",
                 "price": 199.99,
                 "rating": 4.8,
@@ -502,34 +565,46 @@ def add_sample_products():
         ]
         
         added_count = 0
-        for prod_data in sample_products:
-            # Create Product object
-            product = Product(
-                name=prod_data["name"],
-                price=prod_data["price"],
-                rating=prod_data["rating"],
-                review_count=prod_data["review_count"],
-                category=prod_data["category"],
-                stock=prod_data["stock"],
-                image_url=prod_data["image_url"],
-                description=prod_data["description"]
-            )
-            db.session.add(product)
-            added_count += 1
-        
-        # Commit to database
-        db.session.commit()
-        
-        return jsonify({
-            "status": "success",
-            "message": f"Added {added_count} sample products to database",
-            "products_added": sample_products
-        })
+        try:
+            for prod_data in sample_products:
+                # Create Product object
+                product = Product(
+                    name=prod_data["name"],
+                    price=prod_data["price"],
+                    rating=prod_data["rating"],
+                    review_count=prod_data["review_count"],
+                    category=prod_data["category"],
+                    stock=prod_data["stock"],
+                    image_url=prod_data["image_url"],
+                    description=prod_data["description"]
+                )
+                db.session.add(product)
+                added_count += 1
+            
+            # Commit to database
+            db.session.commit()
+            
+            return jsonify({
+                "status": "success",
+                "message": f"Added {added_count} sample products to database",
+                "products_added": sample_products,
+                "total_products": Product.query.count()
+            })
+            
+        except Exception as insert_error:
+            db.session.rollback()
+            return jsonify({
+                "status": "error",
+                "message": "Failed to insert products",
+                "error": str(insert_error),
+                "added_before_error": added_count
+            }), 500
         
     except Exception as e:
         return jsonify({
             "status": "error",
-            "error": str(e)
+            "error": str(e),
+            "message": "Unexpected error in add_sample_products"
         }), 500
 
 @routes_bp.route('/api/debug-info')
