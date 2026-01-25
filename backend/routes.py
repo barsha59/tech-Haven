@@ -1,11 +1,11 @@
-# routes.py
+# routes.py - TechHaven Electronics Store
 from flask import Blueprint, request, jsonify, current_app
 from extensions import db
 from models import Product, Order, Review, User, Wishlist 
 import stripe
 import os
 
-print("✅ routes.py loaded")
+print("✅ TechHaven routes.py loaded")
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -19,64 +19,26 @@ stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "sk_test_51Sl1TM2YdULA0kvGp
 def get_products():
     sort_by = request.args.get('sort')
     
-    try:
-        # Try to get from database
-        if sort_by == "price":
-            products = Product.query.order_by(Product.price.asc()).all()
-        elif sort_by == "rating":
-            products = Product.query.order_by(Product.rating.desc()).all()
-        else:
-            products = Product.query.all()
-        
-        return jsonify([
-            {
-                "id": p.id,
-                "name": p.name,
-                "price": p.price,
-                "rating": p.rating,
-                "reviews": p.review_count,
-                "category": p.category,
-                "stock": p.stock,
-                "image": p.image_url
-            }
-            for p in products
-        ])
-        
-    except Exception as e:
-        print(f"Database error, returning sample data: {e}")
-        # Fallback sample data
-        return jsonify([
-            {
-                "id": 1,
-                "name": "Gaming Laptop Pro",
-                "price": 1299.99,
-                "rating": 4.5,
-                "reviews": 128,
-                "category": "Electronics",
-                "stock": 15,
-                "image": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400"
-            },
-            {
-                "id": 2,
-                "name": "Wireless Mouse",
-                "price": 29.99,
-                "rating": 4.2,
-                "reviews": 89,
-                "category": "Accessories",
-                "stock": 50,
-                "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400"
-            },
-            {
-                "id": 3,
-                "name": "Mechanical Keyboard",
-                "price": 89.99,
-                "rating": 4.7,
-                "reviews": 203,
-                "category": "Accessories",
-                "stock": 25,
-                "image": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400"
-            }
-        ])
+    if sort_by == "price":
+        products = Product.query.order_by(Product.price.asc()).all()
+    elif sort_by == "rating":
+        products = Product.query.order_by(Product.rating.desc()).all()
+    else:
+        products = Product.query.all()
+    
+    return jsonify([
+        {
+            "id": p.id,
+            "name": p.name,
+            "price": p.price,
+            "rating": p.rating,
+            "reviews": p.review_count,
+            "category": p.category,
+            "stock": p.stock,
+            "image": p.image_url
+        }
+        for p in products
+    ])
 
 @routes_bp.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
@@ -208,8 +170,6 @@ def confirm_payment(order_id):
     order.status = "Paid"
     db.session.commit()
     return jsonify({"message": f"Order {order_id} marked as Paid"})
-
-# routes.py - ADD THESE NEW ROUTES
 
 # ----------------------
 # USER AUTHENTICATION
@@ -454,13 +414,10 @@ def check_wishlist():
 # DEBUG & DATABASE CHECK ROUTES
 # ======================
 
-# routes.py - Update the check_database() function
 @routes_bp.route('/api/check-db')
 def check_database():
     """Check if database has products"""
     try:
-        # Use the existing db connection from Flask-SQLAlchemy
-        from models import Product
         product_count = Product.query.count()
         
         return jsonify({
@@ -470,45 +427,26 @@ def check_database():
             "is_empty": product_count == 0
         })
     except Exception as e:
-        # If query fails, database connection failed
         return jsonify({
             "status": "error",
             "error": f"Database connection failed: {str(e)[:100]}",
-            "suggestion": "Check SSL configuration and Supabase IP whitelist"
+            "suggestion": "Check database configuration"
         }), 500
+
 
 @routes_bp.route('/api/add-sample-products')
 def add_sample_products():
-    """Add sample products to empty database"""
+    """Add more sample products to empty database"""
     try:
-        # Try to check database connection first
-        try:
-            current_count = Product.query.count()
-            db_connected = True
-        except Exception as db_error:
-            print(f"Database query failed: {db_error}")
-            current_count = 0
-            db_connected = False
+        current_count = Product.query.count()
         
-        if not db_connected:
-            return jsonify({
-                "status": "error",
-                "message": "Cannot connect to database",
-                "error": "Database connection failed. Check SSL configuration and Supabase settings.",
-                "suggestion": "1. Ensure DATABASE_URL has ?sslmode=require\n2. Whitelist all IPs in Supabase\n3. Try direct connection instead of pooler"
-            }), 500
+        # If we already have products, just add what's missing
+        products_added = 0
         
-        if current_count > 0:
-            return jsonify({
-                "status": "info",
-                "message": f"Already have {current_count} products. No need to add samples.",
-                "product_count": current_count
-            })
-        
-        # Sample products data
+        # EXTENDED SAMPLE ELECTRONICS PRODUCTS (25+ products)
         sample_products = [
+            # Laptops
             {
-                "id": 1,
                 "name": "Gaming Laptop Pro",
                 "price": 1299.99,
                 "rating": 4.5,
@@ -519,55 +457,293 @@ def add_sample_products():
                 "description": "High-performance gaming laptop with RTX 4070"
             },
             {
-                "id": 2,
-                "name": "Wireless Mouse",
-                "price": 29.99,
-                "rating": 4.2,
-                "review_count": 89,
-                "category": "Accessories",
-                "stock": 50,
-                "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400",
-                "description": "Ergonomic wireless mouse with long battery life"
+                "name": "MacBook Air M3",
+                "price": 1099.99,
+                "rating": 4.8,
+                "review_count": 342,
+                "category": "Laptops", 
+                "stock": 20,
+                "image_url": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400",
+                "description": "Apple M3 chip, 13.6-inch Liquid Retina display"
             },
             {
-                "id": 3,
-                "name": "Mechanical Keyboard",
-                "price": 89.99,
+                "name": "Dell XPS 15",
+                "price": 1499.99,
+                "rating": 4.6,
+                "review_count": 189,
+                "category": "Laptops",
+                "stock": 12,
+                "image_url": "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400",
+                "description": "Intel Core i9, 32GB RAM, 1TB SSD"
+            },
+            
+            # Smartphones
+            {
+                "name": "iPhone 15 Pro Max",
+                "price": 1299.99,
+                "rating": 4.8,
+                "review_count": 512,
+                "category": "Smartphones",
+                "stock": 25,
+                "image_url": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400",
+                "description": "Titanium design, A17 Pro chip, 5x telephoto"
+            },
+            {
+                "name": "Samsung Galaxy S24 Ultra",
+                "price": 1199.99,
                 "rating": 4.7,
-                "review_count": 203,
+                "review_count": 428,
+                "category": "Smartphones",
+                "stock": 18,
+                "image_url": "https://images.unsplash.com/photo-1610945264815-d3e49530c1a0?w=400",
+                "description": "Snapdragon 8 Gen 3, S-Pen included"
+            },
+            {
+                "name": "Google Pixel 8 Pro",
+                "price": 999.99,
+                "rating": 4.6,
+                "review_count": 267,
+                "category": "Smartphones",
+                "stock": 22,
+                "image_url": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400",
+                "description": "Tensor G3 chip, Best-in-class camera"
+            },
+            
+            # Tablets
+            {
+                "name": "iPad Pro 12.9-inch",
+                "price": 1099.99,
+                "rating": 4.8,
+                "review_count": 312,
+                "category": "Tablets",
+                "stock": 15,
+                "image_url": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400",
+                "description": "M2 chip, Liquid Retina XDR display"
+            },
+            {
+                "name": "Samsung Galaxy Tab S9 Ultra",
+                "price": 1199.99,
+                "rating": 4.7,
+                "review_count": 189,
+                "category": "Tablets",
+                "stock": 10,
+                "image_url": "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400",
+                "description": "14.6-inch display, S-Pen included"
+            },
+            
+            # Audio
+            {
+                "name": "Sony WH-1000XM5",
+                "price": 399.99,
+                "rating": 4.8,
+                "review_count": 623,
+                "category": "Audio",
+                "stock": 30,
+                "image_url": "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400",
+                "description": "Industry-leading noise cancellation"
+            },
+            {
+                "name": "AirPods Pro (2nd Gen)",
+                "price": 249.99,
+                "rating": 4.7,
+                "review_count": 845,
+                "category": "Audio",
+                "stock": 45,
+                "image_url": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400",
+                "description": "Active Noise Cancellation, MagSafe"
+            },
+            {
+                "name": "Bose QuietComfort Ultra",
+                "price": 429.99,
+                "rating": 4.6,
+                "review_count": 278,
+                "category": "Audio",
+                "stock": 18,
+                "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+                "description": "Immersive Audio, noise cancelling"
+            },
+            
+            # Monitors
+            {
+                "name": "LG UltraGear 27GP850",
+                "price": 449.99,
+                "rating": 4.5,
+                "review_count": 167,
+                "category": "Monitors",
+                "stock": 14,
+                "image_url": "https://images.unsplash.com/photo-1546538915-a9e2c8d0a0b1?w=400",
+                "description": "27-inch QHD, 180Hz, Nano IPS"
+            },
+            {
+                "name": "Samsung Odyssey G9",
+                "price": 1299.99,
+                "rating": 4.7,
+                "review_count": 89,
+                "category": "Monitors",
+                "stock": 6,
+                "image_url": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400",
+                "description": "49-inch curved, 240Hz, QLED"
+            },
+            
+            # Accessories
+            {
+                "name": "Logitech MX Master 3S",
+                "price": 99.99,
+                "rating": 4.6,
+                "review_count": 456,
+                "category": "Accessories",
+                "stock": 50,
+                "image_url": "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400",
+                "description": "Wireless mouse, Darkfield tracking"
+            },
+            {
+                "name": "Keychron K8 Pro",
+                "price": 119.99,
+                "rating": 4.7,
+                "review_count": 289,
                 "category": "Accessories",
                 "stock": 25,
                 "image_url": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400",
-                "description": "RGB mechanical keyboard with blue switches"
+                "description": "Mechanical keyboard, hot-swappable"
             },
             {
-                "id": 4,
-                "name": "27-inch 4K Monitor",
-                "price": 399.99,
+                "name": "Apple Magic Keyboard",
+                "price": 149.99,
                 "rating": 4.4,
-                "review_count": 67,
-                "category": "Monitors",
-                "stock": 12,
-                "image_url": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=400",
-                "description": "Ultra HD monitor with HDR support"
+                "review_count": 312,
+                "category": "Accessories",
+                "stock": 35,
+                "image_url": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400",
+                "description": "Wireless keyboard with Touch ID"
+            },
+            
+            # Gaming
+            {
+                "name": "PlayStation 5",
+                "price": 499.99,
+                "rating": 4.8,
+                "review_count": 1023,
+                "category": "Gaming",
+                "stock": 15,
+                "image_url": "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400",
+                "description": "825GB SSD, DualSense controller"
             },
             {
-                "id": 5,
-                "name": "Noise Cancelling Headphones",
-                "price": 199.99,
-                "rating": 4.8,
-                "review_count": 312,
-                "category": "Audio",
+                "name": "Xbox Series X",
+                "price": 499.99,
+                "rating": 4.7,
+                "review_count": 876,
+                "category": "Gaming",
+                "stock": 12,
+                "image_url": "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400",
+                "description": "1TB SSD, Game Pass included"
+            },
+            {
+                "name": "Nintendo Switch OLED",
+                "price": 349.99,
+                "rating": 4.6,
+                "review_count": 723,
+                "category": "Gaming",
+                "stock": 25,
+                "image_url": "https://images.unsplash.com/photo-1587844791456-72e29d88e673?w=400",
+                "description": "7-inch OLED screen, 64GB storage"
+            },
+            
+            # Smart Home
+            {
+                "name": "Amazon Echo Dot (5th Gen)",
+                "price": 49.99,
+                "rating": 4.3,
+                "review_count": 678,
+                "category": "Smart Home",
+                "stock": 60,
+                "image_url": "https://images.unsplash.com/photo-1589003077984-894e133dabab?w=400",
+                "description": "Smart speaker with Alexa"
+            },
+            {
+                "name": "Google Nest Hub (2nd Gen)",
+                "price": 99.99,
+                "rating": 4.4,
+                "review_count": 342,
+                "category": "Smart Home",
+                "stock": 28,
+                "image_url": "https://images.unsplash.com/photo-1558089687-f282ffcbc0d4?w=400",
+                "description": "7-inch smart display with Assistant"
+            },
+            
+            # Wearables
+            {
+                "name": "Apple Watch Series 9",
+                "price": 399.99,
+                "rating": 4.7,
+                "review_count": 589,
+                "category": "Wearables",
                 "stock": 30,
-                "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
-                "description": "Premium wireless headphones with ANC"
+                "image_url": "https://images.unsplash.com/photo-1434493650001-5d43a6fea0a6?w=400",
+                "description": "GPS + Cellular, 45mm, Always-On"
+            },
+            {
+                "name": "Samsung Galaxy Watch 6 Classic",
+                "price": 369.99,
+                "rating": 4.5,
+                "review_count": 287,
+                "category": "Wearables",
+                "stock": 22,
+                "image_url": "https://images.unsplash.com/photo-1579586337278-3fbe9cff5dfb?w=400",
+                "description": "47mm, Rotating bezel, LTE"
+            },
+            
+            # Storage
+            {
+                "name": "SanDisk Extreme Portable SSD 1TB",
+                "price": 99.99,
+                "rating": 4.6,
+                "review_count": 412,
+                "category": "Storage",
+                "stock": 40,
+                "image_url": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=400",
+                "description": "1050MB/s read, IP65 water resistant"
+            },
+            {
+                "name": "Samsung T7 Shield 2TB",
+                "price": 149.99,
+                "rating": 4.7,
+                "review_count": 256,
+                "category": "Storage",
+                "stock": 25,
+                "image_url": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=400",
+                "description": "IP65 rated, 1050MB/s transfer"
+            },
+            
+            # Cameras
+            {
+                "name": "Sony Alpha 7 IV",
+                "price": 2499.99,
+                "rating": 4.8,
+                "review_count": 189,
+                "category": "Cameras",
+                "stock": 8,
+                "image_url": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
+                "description": "Full-frame mirrorless camera"
+            },
+            {
+                "name": "GoPro Hero 12",
+                "price": 399.99,
+                "rating": 4.5,
+                "review_count": 267,
+                "category": "Cameras",
+                "stock": 35,
+                "image_url": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
+                "description": "Action camera, 5.3K video"
             }
         ]
         
+        # Add only products that don't exist yet
         added_count = 0
-        try:
-            for prod_data in sample_products:
-                # Create Product object
+        for prod_data in sample_products:
+            # Check if product already exists by name
+            existing = Product.query.filter_by(name=prod_data["name"]).first()
+            if not existing:
                 product = Product(
                     name=prod_data["name"],
                     price=prod_data["price"],
@@ -580,33 +756,34 @@ def add_sample_products():
                 )
                 db.session.add(product)
                 added_count += 1
-            
-            # Commit to database
-            db.session.commit()
-            
+        
+        db.session.commit()
+        
+        total_now = Product.query.count()
+        
+        if added_count == 0:
+            return jsonify({
+                "status": "info",
+                "message": f"All {len(sample_products)} products already exist in database.",
+                "product_count": total_now,
+                "added": 0
+            })
+        else:
             return jsonify({
                 "status": "success",
-                "message": f"Added {added_count} sample products to database",
-                "products_added": sample_products,
-                "total_products": Product.query.count()
+                "message": f"Added {added_count} new products to database. Total now: {total_now}",
+                "total_products": total_now,
+                "added": added_count,
+                "skipped": len(sample_products) - added_count
             })
-            
-        except Exception as insert_error:
-            db.session.rollback()
-            return jsonify({
-                "status": "error",
-                "message": "Failed to insert products",
-                "error": str(insert_error),
-                "added_before_error": added_count
-            }), 500
         
     except Exception as e:
         return jsonify({
             "status": "error",
             "error": str(e),
-            "message": "Unexpected error in add_sample_products"
+            "message": "Failed to add sample products"
         }), 500
-
+    
 @routes_bp.route('/api/debug-info')
 def debug_info():
     """Get debug information about the backend"""
@@ -614,10 +791,10 @@ def debug_info():
     
     return jsonify({
         "backend_running": True,
-        "service": "tech-haven-4r4y.onrender.com",
+        "service": "TechHaven Electronics API",
         "database_url_exists": bool(os.environ.get('DATABASE_URL')),
         "total_products": Product.query.count(),
         "total_users": User.query.count(),
         "total_orders": Order.query.count(),
-        "environment": "production"
+        "environment": "production" if os.environ.get('DATABASE_URL') else "development"
     })
