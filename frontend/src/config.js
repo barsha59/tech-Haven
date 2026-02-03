@@ -1,3 +1,3 @@
-// frontend/src/config.js
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"; // your local backend port
+// src/config.js
+const API_URL = "http://127.0.0.1:5000";  // Correct port
 export default API_URL;
