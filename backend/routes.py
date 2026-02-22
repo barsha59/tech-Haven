@@ -10,10 +10,8 @@ print("✅ TechHaven routes.py loaded")
 routes_bp = Blueprint("routes", __name__)
 
 # Stripe test secret key
-stripe.api_key = os.environ.get(
-    "STRIPE_SECRET_KEY",
-    "sk_test_51Sl1TM2YdULA0kvGpfx1oZOXm23IjU8gHAuGgHnT5g6mTCwWroS2FarkOOEItnjOVvDjbakucO2nFxVepPbGeldS00tkYhBAbR"
-)
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+print("Stripe API Key loaded?", stripe.api_key is not None)
 
 # ----------------------
 # GET all products
