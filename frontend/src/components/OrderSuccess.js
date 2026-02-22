@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import API_URL from "../config";
+import { API_URL, STRIPE_PUBLISHABLE_KEY } from '../config';
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
