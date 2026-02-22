@@ -1,36 +1,23 @@
-# app.py - TechHaven (Updated)
+# app.py - TechHaven (Cleaned)
 from flask import Flask
 from flask_cors import CORS
 from extensions import db
 from routes import routes_bp
 import os
 
-# Initialize Flask
+# ---------------- INITIALIZE FLASK ----------------
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ---------------- DATABASE CONFIG ----------------
-database_url = os.environ.get("DATABASE_URL")
+# Point directly to your SQLite database
+sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "database.db")
+if not os.path.exists(sqlite_path):
+    raise FileNotFoundError(f"SQLite database not found: {sqlite_path}")
 
-if database_url:
-    # Remove SSL parameter (Aiven handles SSL automatically)
-    if "?ssl-mode=REQUIRED" in database_url:
-        database_url = database_url.replace("?ssl-mode=REQUIRED", "")
-
-    # Use mysqlclient driver for MySQL
-    if database_url.startswith("mysql://"):
-        database_url = database_url.replace("mysql://", "mysql+mysqldb://", 1)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    print("✅ Using Aiven MySQL database")
-else:
-    # Local SQLite fallback
-    sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "local.db")
-    os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)  # Ensure folder exists
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{sqlite_path}"
-    print(f"⚠️ Using SQLite (local): {sqlite_path}")
-
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{sqlite_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+print(f"✅ Using SQLite database: {sqlite_path}")
 
 # ---------------- INIT DB ----------------
 db.init_app(app)
@@ -38,7 +25,7 @@ db.init_app(app)
 with app.app_context():
     try:
         db.create_all()
-        print("✅ Database tables created successfully")
+        print("✅ Database tables ensured")
     except Exception as e:
         print(f"⚠️ Database error: {str(e)[:100]}")
 

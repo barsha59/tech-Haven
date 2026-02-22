@@ -1,12 +1,23 @@
 services:
   backend:
     build: ./backend
-    ports:
+    container_name: tech-haven-backend
+    restart: always
+    ports:                     # <-- changed from 'expose' to 'ports'
       - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    volumes:
+      - ./backend:/app
+      - ./backend/database.db:/app/database.db   # persist your DB
 
   frontend:
     build: ./frontend
+    container_name: tech-haven-frontend
+    restart: always
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - backend

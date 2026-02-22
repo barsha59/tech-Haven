@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import API_URL from "../config"; // Import API_URL from config
+import { API_URL, STRIPE_PUBLISHABLE_KEY } from '../config';
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
