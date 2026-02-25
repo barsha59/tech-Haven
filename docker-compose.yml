@@ -9,9 +9,11 @@ services:
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - API_KEY=${API_KEY}
+
     volumes:
       - ./backend:/app
-      - ./backend/database.db:/app/database.db   # persist your DB
+      - ./backend/database.db:/app/backend/database.db   # persist your DB
 
   frontend:
     build: ./frontend

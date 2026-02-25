@@ -4,10 +4,30 @@ from flask_cors import CORS
 from extensions import db
 from routes import routes_bp
 import os
+from flask import request, jsonify
 
 # ---------------- INITIALIZE FLASK ----------------
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# ---------------- API KEY PROTECTION ----------------
+import os
+from flask import request, jsonify
+
+API_KEY = os.environ.get("API_KEY")
+
+@app.before_request
+def verify_api_key():
+    # Protect only secure chatbot endpoints
+    if request.path.startswith("/api/secure/"):
+        client_key = request.headers.get("x-api-key")
+        
+        if not API_KEY:
+            return jsonify({"error": "Server API key not configured"}), 500
+        
+        if client_key != API_KEY:
+            return jsonify({"error": "Unauthorized access"}), 401
+# -------------------------------------------------------------------------------------------
 
 # ---------------- DATABASE CONFIG ----------------
 # Point directly to your SQLite database
